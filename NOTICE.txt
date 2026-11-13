@@ -1,0 +1,17 @@
+No Loot While Armed - license notice
+
+Original work: No Loot When Armed by RavenKZP and Ege Yilmaz (Quantumyilmaz), https://github.com/RavenKZP/No-Loot-While-Armed
+Copyright (c) 2025 RavenKZP and Ege Yilmaz, MIT License (LICENSE-MIT.txt, unchanged).
+
+Modified version: 2.0.1 and later, by CageTV, https://github.com/CageTV/No-Loot-While-Armed
+Copyright (c) 2026 CageTV, for the changes listed in the release notes. The source files keep the MIT license; the NoLootWhileArmed.dll
+of this download links alandtse's CommonLibSSE-NG (https://github.com/alandtse/CommonLibSSE-NG, GPL-3.0 with a modding exception) and is
+therefore distributed under the GNU General Public License, version 3 (LICENSE, the unmodified license text).
+
+Source code: the complete source of this download is in https://github.com/CageTV/No-Loot-While-Armed (the tag named in the release notes).
+
+Header-only libraries built in: CLibUtil (powerof3, MIT), SKSE-MCP (Quantumyilmaz, see its repository), SimpleIni (Brodie Thiesfield, MIT).
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 3 of the License. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
