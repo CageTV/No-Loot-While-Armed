@@ -89,6 +89,14 @@ void ModCompatibility::QuickLootMod::OnOpeningLootMenu(QuickLoot::Events::Openin
     }
 }
 
+// 2026-11: with QuickLoot IE the first item was taken by itself right after the weapon was sheathed and the menu re-opened (Nexus bug report
+// "Quickloot + crosshair reference checker"). Refuse a take that happens within a moment of our own re-open.
+void ModCompatibility::QuickLootMod::OnTakingItem(QuickLoot::Events::TakingItemEvent* event) {
+    if (Hooks::NowMs() < Hooks::ql_take_veto_until_ms.load()) {
+        event->result = QuickLoot::Events::HandleResult::kStop;
+    }
+}
+
 void ModCompatibility::Install() { 
     QuickLootMod::GetSingleton()->Init(); 
 }

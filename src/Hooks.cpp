@@ -5,6 +5,17 @@
 
 namespace Hooks {
 
+    namespace {
+        // alandtse's CommonLibSSE-NG (the Skyrim 1.7.x build, NLWA_NG) dropped RE::DebugNotification.
+        void Notify(const char* a_message, const char* a_sound = nullptr) {
+#ifdef NLWA_NG
+            RE::SendHUDMessage::ShowHUDMessage(a_message, a_sound, true);
+#else
+            RE::DebugNotification(a_message, a_sound);
+#endif
+        }
+    }
+
     void Install() {
         auto& trampoline = SKSE::GetTrampoline();
         constexpr size_t size_per_hook = 14;
@@ -34,6 +45,7 @@ namespace Hooks {
             if (set->AutoSheatle) {
                 player->DrawWeaponMagicHands(false);
                 blocked.store(true);
+                sheathe_started_ms.store(NowMs());
             }
             if (set->AutoActivate) {
                 AnimationEventSink* eventSink = GetOrCreateEventSink();
@@ -49,9 +61,24 @@ namespace Hooks {
         return playerRace && Settings::GetSingleton()->excludedRaces.contains(playerRace);
     }
 
+    // The sheathe never finished (no "IdleStop"; seen when another mod holds the graph, and swimming): stop swallowing the activate key and
+    // stop listening, otherwise the key stays dead until the next successful sheathe.
+    void ReleaseStuckSheathe() {
+        sheathe_started_ms.store(0);
+        blocked.store(false);
+        if (currentAnimationEventSink) CleanupAnimationEvent(currentAnimationEventSink.get());
+        logger::warn("Sheathe did not finish within {} ms; the activate key is released again", kSheatheTimeoutMs);
+    }
+
     bool OnActivate() {
         const auto set = Settings::GetSingleton();
         const auto player = RE::PlayerCharacter::GetSingleton();
+
+        // Swimming: the game does not let the player sheathe or ready a weapon in the water, so there is nothing to wait for and the
+        // activation (looting underwater) would be refused for good. Let it through.
+        if (const auto actorState = player->AsActorState(); actorState && actorState->IsSwimming()) {
+            return true;
+        }
 
         saved_ref = crosshair_ref;
 
@@ -226,6 +253,9 @@ namespace Hooks {
     }
 
     void InputHook::thunk(RE::BSTEventSource<RE::InputEvent*>* a_dispatcher, RE::InputEvent* const* a_event) {
+        if (const auto started = sheathe_started_ms.load(); started != 0 && NowMs() - started > kSheatheTimeoutMs) {
+            ReleaseStuckSheathe();
+        }
         if (!Settings::GetSingleton()->ModActive || !a_dispatcher || !a_event || !crosshair_ref) {
             return func(a_dispatcher, a_event);
         }
@@ -275,11 +305,11 @@ namespace Hooks {
         }
         if (block) {
             if (set->Message && set->MessageSound) {
-                RE::DebugNotification("No Loot When Armed", "UIMenuCancel");
+                Notify("No Loot When Armed", "UIMenuCancel");
             } else if (set->Message) {
-                RE::DebugNotification("No Loot When Armed");
+                Notify("No Loot When Armed");
             } else if (set->MessageSound) {
-                RE::DebugNotification(" ", "UIMenuCancel");  // Not trigger multiple times like PlaySound do
+                Notify(" ", "UIMenuCancel");  // Not trigger multiple times like PlaySound do
             }
         }
         return block;
@@ -315,6 +345,7 @@ namespace Hooks {
                 }
 #endif
                 ql->SetAllowed(true);
+                ql_take_veto_until_ms.store(NowMs() + kQuickLootTakeVetoMs);
                 my_event2.crosshairRef = Hooks::saved_ref;
                 SKSE::GetCrosshairRefEventSource()->SendEvent(&my_event);
                 SKSE::GetCrosshairRefEventSource()->SendEvent(&my_event2);

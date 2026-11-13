@@ -32,6 +32,7 @@ namespace ModCompatibility {
 	class QuickLootMod final : public Mod, public clib_util::singleton::ISingleton<QuickLootMod>
     {
         static void OnOpeningLootMenu(QuickLoot::Events::OpeningLootMenuEvent* event);
+        static void OnTakingItem(QuickLoot::Events::TakingItemEvent* event);
 
 		bool is_allowed = true;
 
@@ -41,6 +42,7 @@ namespace ModCompatibility {
 			if (!is_installed) return;
 			QuickLoot::QuickLootAPI::Init();
             QuickLoot::QuickLootAPI::RegisterOpeningLootMenuHandler(OnOpeningLootMenu);
+            QuickLoot::QuickLootAPI::RegisterTakingItemHandler(OnTakingItem);
 		}
 	public:
 		QuickLootMod() : Mod("Data/SKSE/Plugins/QuickLootIE.dll") {}

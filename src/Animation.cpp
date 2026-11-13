@@ -6,6 +6,7 @@ RE::BSEventNotifyControl AnimationEventSink::ProcessEvent(const RE::BSAnimationG
     if (const RE::BSFixedString& eventTag = a_event->tag; eventTag == "IdleStop") {
         CleanupAnimationEvent(this);
         Hooks::blocked.store(false);
+        Hooks::sheathe_started_ms.store(0);
         if (const auto ref = Hooks::crosshair_ref) {
             if (ref == Hooks::saved_ref) {
                 const auto player = RE::PlayerCharacter::GetSingleton();
